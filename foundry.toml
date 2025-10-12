@@ -1,6 +1,13 @@
 [profile.default]
+# These are defualt config
 src = "src"
 out = "out"
 libs = ["lib"]
 
-# See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
+# Modified
+verbosity=3 #this make -vv default. For instance, forge test -vv will be default
+
+[fmt]
+line_length = 100
+tab_width = 4
+
