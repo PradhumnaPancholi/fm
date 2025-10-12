@@ -1,12 +1,12 @@
 //SPDX-License-Identifier: GPL.3.0
 pragma solidity ^0.8.0;
 
-import "./ERC20.sol";
+import "./token/ERC20.sol";
 import "./Mintable.sol";
 
-contract MyToken is ERC20, Mintable{
+contract ExampleToken is ERC20, Mintable{
 
-  constructor() ERC20("TestToken", "TST", 18){
+  constructor() ERC20("ExampleToken", "EXT", 18){
     // Mints 100 TST tokens for initial supply
     _mint(msg.sender, 100 * 10**18);
   }
