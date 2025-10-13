@@ -29,12 +29,13 @@ contract ERC20Test is Test {
     address public owner;
     address public alice;
     address public bob;
+    address public charlie;
 
     function setUp() public {
         owner = address(this); // This makes this contract owner of the mockERC20
         alice = makeAddr("alice");
         bob = makeAddr("bob");
-
+        charlie = makeAddr("charlie");
         //Deploys an instance of MockERC20
         token = new MockERC20("Test Token", "TST", 18);
     }
@@ -123,7 +124,122 @@ contract ERC20Test is Test {
         assertEq(token.balanceOf(alice), 5); // alice's balance should be 5
         assertEq(token.balanceOf(bob), 5); // bob's blance should be 5
     }
+
+    function test_TransferEmitsEvent() public {
+        token.mint(alice, 5);
+
+        vm.expectEmit();
+        emit Transfer(alice, bob, 1);
+
+
+        vm.prank(alice);
+        token.transfer(bob, 1);
+
+    }
+
+    function test_TransferToZeroAddress() public {
+        token.mint(alice, 1);
+
+        vm.prank(alice);
+        vm.expectRevert("ERC-20: Transfer To Zero Address"); 
+        token.transfer(address(0), 1);
+    }
+
+    function test_TransferFullAmount() public {
+        token.mint(alice, 1);
+        
+        vm.prank(alice);
+        token.transfer(bob, 1);
+
+        assertEq(token.balanceOf(alice), 0);
+        assertEq(token.balanceOf(bob), 1);
+    }
+
+    function test_TransferChangeBalance() public {
+        token.mint(alice, 10);
+        assertEq(token.balanceOf(alice), 10); // Alice's balance should be 10
+        assertEq(token.balanceOf(bob), 0); // Bob's balance should be 0
+
+        vm.prank(alice);
+        token.transfer(bob, 1);
+
+        assertEq(token.balanceOf(alice), 9); // Alice's balance should be 9
+        assertEq(token.balanceOf(bob), 1); // Bob's balance should be 1
+    }
+
+    function test_TransferAmount() public {
+        token.mint(alice, 1);
+
+        vm.prank(alice);
+        vm.expectRevert("ERC-20: Amount Exceeds Balance");
+        token.transfer(bob, 2);
+    }
+
+    // Approval
+    // 1. Approval adds allowance
+    // 2. Approval reduces allowance after spending
+    //3. Can spend as much as allowed
+    // 4. can not spend more than allowance
+    //5. from zero
+    //6. to zero
+    // 7. emits event
+    function test_ApproveUpdatesAllowance() public {
+        token.mint(alice, 10);
+        vm.prank(alice);
+        token.approve(bob, 2);
+        vm.prank(bob);
+        token.transferFrom(alice, charlie, 1);
+        assertEq(token.allowance(alice, bob), 1);
+    }
+    function test_ApproveCanSpendAllowance() public {
+        token.mint(alice, 10);
+        vm.prank(alice);
+        token.approve(bob, 1);
+        vm.prank(bob);
+        vm.expectEmit();
+        emit Transfer(alice, charlie, 1);
+        token.transferFrom(alice, charlie, 1);
+    }
+    function test_ApproveAddsAllowance() public {
+        token.mint(alice, 10);
+        vm.prank(alice);
+
+        token.approve(bob, 1);
+        assertEq(token.allowance(alice, bob), 1);
+    }
+
+    function test_ApproveCanNotSpendMoreThanAllowed() public {
+        token.mint(alice, 10);
+        vm.prank(alice);
+        token.approve(bob, 1);
+        vm.prank(bob);
+        vm.expectRevert("ERC-20: Insufficient Allowance");
+        token.transferFrom(alice, charlie, 2);
+    }
+    function testApproveFromZeroAddress() public {
+        vm.prank(address(0));
+        vm.expectRevert("ERC-20: Approve From Zero Address");
+        token.approve(bob, 1);
+    }
+
+    function test_ApproveToZeroAddress() public {
+        token.mint(alice, 10);
+        vm.prank(alice);
+        vm.expectRevert("ERC-20: Approve To Zero Address");
+        token.approve(address(0), 1);
+
+    }
+    function test_ApproveEmitsEvent() public {
+        token.mint(alice, 10);
+
+        vm.expectEmit();
+        emit Approval(alice, bob, 1);
+        vm.prank(alice);
+        token.approve(bob, 1);
+    }
+
     // Events
 
     event Transfer(address indexed from, address indexed to, uint256 amount);
+    event Approval(address indexed owner, address indexed spender, uint256 amount);
 }
