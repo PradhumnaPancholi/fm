@@ -1,11 +1,13 @@
-test:
-	forge test -vvv
+.PHONY: ft test coverage
 
-fmt:
-	forge fmt
+ft:
+	forge coverage 
+
+# Main command - runs lint then build
+fb:  build # add linting
+
+# Individual steps
 
 build:
 	forge build
 
-check: fmt build test
-	@echo "✅ Done"
