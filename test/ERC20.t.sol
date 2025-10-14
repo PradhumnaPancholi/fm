@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import "forge-std/Test.sol";
 import "@fm/token/ERC20.sol";
 
-//Implemention of base ERC20 contract for testing//
+//mock
 contract MockERC20 is ERC20 {
     constructor(string memory name, string memory symbol, uint8 decimals)
         ERC20(name, symbol, decimals)
@@ -21,39 +21,48 @@ contract MockERC20 is ERC20 {
     }
 }
 
-//---Tests---//
+/**
+ * @title ERC20Test
+ * @notice Test suite for base ERC-20 implementation
+ * @author Pradhumna Pancholi
+ * @dev Tests cover all of the core ERC-20 functionalities with edge cases
+*/
 contract ERC20Test is Test {
     MockERC20 public token;
 
-    //Setting up accounts for testing
+    /*///////////////////////////////
+                SETUP
+    //////////////////////////////*/
     address public owner;
     address public alice;
     address public bob;
     address public charlie;
 
     function setUp() public {
-        owner = address(this); // This makes this contract owner of the mockERC20
+        owner = address(this);
         alice = makeAddr("alice");
         bob = makeAddr("bob");
         charlie = makeAddr("charlie");
-        //Deploys an instance of MockERC20
+        //Deploys an instance of MockERC20 to perform tests on it
         token = new MockERC20("Test Token", "TST", 18);
     }
 
-    // Metadata //
+    /*////////////////////////////////////
+                Metadata Test
+    ///////////////////////////////////*/
     function test_MetaData() public view {
         assertEq(token.name(), "Test Token");
         assertEq(token.symbol(), "TST");
         assertEq(token.decimals(), 18);
     }
 
-    // Minting
+    /*///////////////////////////////////
+                Mint Tests
+    //////////////////////////////////*/
     function test_Mint() public {
         token.mint(alice, 100);
 
-        //1. Token supply increased
         assertEq(token.totalSupply(), 100);
-        //2. Alice gets 100 tokens
         assertEq(token.balanceOf(alice), 100);
     }
 
@@ -64,22 +73,22 @@ contract ERC20Test is Test {
 
     function test_MintEmitsTransfer() public {
         vm.expectEmit();
-        emit Transfer(address(0), alice, 100);
 
+        emit Transfer(address(0), alice, 100);
         token.mint(alice, 100);
     }
 
-    // Burn
-    //1. burn affects total supply and blance
-    // 2. Burn emits events
-    //3. can not burn more tokens
-    //4. can not burn from zero
+    /*////////////////////////////////////////
+                    Burn Tests
+    ///////////////////////////////////////*/
     function test_Burn() public {
         token.mint(alice, 100);
+
         assertEq(token.totalSupply(), 100);
         assertEq(token.balanceOf(alice), 100);
 
         token.burn(alice, 10);
+        
         assertEq(token.totalSupply(), 90);
         assertEq(token.balanceOf(alice), 90);
     }
@@ -93,7 +102,7 @@ contract ERC20Test is Test {
         token.burn(alice, 10);
     }
 
-    function test_BurnRevertsInsufficientBalance() public {
+    function test_BurnRevertsWhen_BalanceIsInsufficient() public {
         token.mint(alice, 10);
         assertEq(token.balanceOf(alice), 10);
 
@@ -106,23 +115,19 @@ contract ERC20Test is Test {
         token.burn(address(0), 1);
     }
 
-    // Transfer
-    //1. Transfer from 0 address
-    // 2. Transfer emits Transfer
-    // 3. Transfer modifies balance//
-    //4 . transfer to zero address
-    //5. transfer full balance//
-    //6. Transfer insuf balance
+    /*///////////////////////////////
+            Transfer Tests
+    //////////////////////////////*/
     function test_Transfer() public {
         token.mint(alice, 10);
-        assertEq(token.balanceOf(alice), 10); // alice's balance is 10
-        assertEq(token.balanceOf(bob), 0); // bob's blance is 0
+        assertEq(token.balanceOf(alice), 10);
+        assertEq(token.balanceOf(bob), 0); 
 
-        vm.prank(alice); // set current account to alice
+        vm.prank(alice);
         token.transfer(bob, 5);
 
-        assertEq(token.balanceOf(alice), 5); // alice's balance should be 5
-        assertEq(token.balanceOf(bob), 5); // bob's blance should be 5
+        assertEq(token.balanceOf(alice), 5);
+        assertEq(token.balanceOf(bob), 5); 
     }
 
     function test_TransferEmitsEvent() public {
@@ -238,6 +243,17 @@ contract ERC20Test is Test {
         token.approve(bob, 1);
     }
 
+    //Burn
+    // 1. Burn reduces balance
+    // 2. burn reduces totalsupply//
+    // 3. Burn amount //
+    // 4. burn emits event
+    function test_BurnTwo() public {
+        token.mint(alice, 10);
+        vm.prank(bob);
+        token.burn(alice, 1);
+        assertEq(token.balanceOf(alice), 9 ); 
+    } 
     // Events
 
     event Transfer(address indexed from, address indexed to, uint256 amount);
