@@ -4,21 +4,21 @@ pragma solidity ^0.8.0;
 import "forge-std/Test.sol";
 import "@fm/token/ERC20.sol";
 
-//mock
+// @notice Mock Implementation of ERC-20 for tesing//
 contract MockERC20 is ERC20 {
     constructor(string memory name, string memory symbol, uint8 decimals)
         ERC20(name, symbol, decimals)
     {}
 
-    //Exposes internal function "_mint" for testing
+    //@dev Exposes internal function "_mint" for testing
     function mint(address to, uint256 amount) public {
         _mint(to, amount);
     }
 
-    //Exposes internal function "_burn" for testing
-    function burn(address from, uint256 amount) public {
-        _burn(from, amount);
-    }
+    ////@dev Exposes internal function "_burn" for testing
+    //function burn(uint256 amount) public {
+    //    _burn(msg.sender, amount);
+    //}
 }
 
 /**
@@ -66,7 +66,7 @@ contract ERC20Test is Test {
         assertEq(token.balanceOf(alice), 100);
     }
 
-    function test_MintToZeroAddr() public {
+    function test_MintRevertsWhen_ToAddrIsZero() public {
         vm.expectRevert("ERC-20: Mint To Zero Address");
         token.mint(address(0), 10);
     }
@@ -87,7 +87,8 @@ contract ERC20Test is Test {
         assertEq(token.totalSupply(), 100);
         assertEq(token.balanceOf(alice), 100);
 
-        token.burn(alice, 10);
+        vm.prank(alice);
+        token.burn(10);
         
         assertEq(token.totalSupply(), 90);
         assertEq(token.balanceOf(alice), 90);
@@ -96,10 +97,11 @@ contract ERC20Test is Test {
     function test_BurnEmitsTransfer() public {
         token.mint(alice, 20);
         assertEq(token.balanceOf(alice), 20);
+        
         vm.expectEmit(true, true, false, true);
         emit Transfer(alice, address(0), 10);
-
-        token.burn(alice, 10);
+        vm.prank(alice);
+        token.burn(10);
     }
 
     function test_BurnRevertsWhen_BalanceIsInsufficient() public {
@@ -107,13 +109,67 @@ contract ERC20Test is Test {
         assertEq(token.balanceOf(alice), 10);
 
         vm.expectRevert("ERC-20: Amount Exceeds Account Balance");
-        token.burn(alice, 11);
+        token.burn(11);
     }
 
-    function test_BurnFromZeroAddress() public {
-        vm.expectRevert("ERC-20: Account Is An Zero Address");
-        token.burn(address(0), 1);
+    function test_BurnFrom() public {
+        token.mint(alice, 10);
+        assertEq(token.balanceOf(alice), 10);
+
+        vm.prank(alice);
+        token.approve(bob, 1);
+
+        vm.prank(bob);
+        token.burnFrom(alice, 1);
+        assertEq(token.balanceOf(alice), 9);
     }
+
+    function test_BurnFromEmitsEvent() public {
+        token.mint(alice, 10);
+        assertEq(token.balanceOf(alice), 10);
+
+        vm.prank(alice);
+        token.approve(bob, 1);
+
+        vm.expectEmit();
+        emit Transfer(alice, address(0), 1);
+        vm.prank(bob);
+        token.burnFrom(alice, 1);
+    }
+
+    function test_BurnFromUpdatesAllowance() public {
+        token.mint(alice, 10);
+        assertEq(token.balanceOf(alice), 10);
+
+        vm.prank(alice);
+        token.approve(bob, 1);
+
+        vm.prank(bob);
+        token.burnFrom(alice, 1);
+        assertEq(token.allowance(alice, bob), 0);
+
+    }
+    function test_BurnFromRevertsWhen_AllowanceIsInsufficient() public {
+        token.mint(alice, 10);
+        assertEq(token.balanceOf(alice), 10);
+
+        vm.prank(alice);
+        token.approve(bob, 1);
+
+        vm.expectRevert("ERC-20: Insufficient Allowance");
+        vm.prank(bob);
+        token.burnFrom(alice, 2);
+    }
+
+    function test_BurnRevertsWhen_NoAllowance() public {
+        token.mint(alice, 10);
+        assertEq(token.balanceOf(alice), 10);
+
+        vm.expectRevert("ERC-20: Insufficient Allowance");
+        vm.prank(bob);
+        token.burnFrom(alice, 2);
+    }
+
 
     /*///////////////////////////////
             Transfer Tests
@@ -142,7 +198,7 @@ contract ERC20Test is Test {
 
     }
 
-    function test_TransferToZeroAddress() public {
+    function test_TransferRevertsWhen_ToAddrIsZero() public {
         token.mint(alice, 1);
 
         vm.prank(alice);
@@ -160,19 +216,19 @@ contract ERC20Test is Test {
         assertEq(token.balanceOf(bob), 1);
     }
 
-    function test_TransferChangeBalance() public {
+    function test_TransferChangesBalance() public {
         token.mint(alice, 10);
-        assertEq(token.balanceOf(alice), 10); // Alice's balance should be 10
-        assertEq(token.balanceOf(bob), 0); // Bob's balance should be 0
+        assertEq(token.balanceOf(alice), 10);
+        assertEq(token.balanceOf(bob), 0); 
 
         vm.prank(alice);
         token.transfer(bob, 1);
 
-        assertEq(token.balanceOf(alice), 9); // Alice's balance should be 9
-        assertEq(token.balanceOf(bob), 1); // Bob's balance should be 1
+        assertEq(token.balanceOf(alice), 9);
+        assertEq(token.balanceOf(bob), 1); 
     }
 
-    function test_TransferAmount() public {
+    function test_TransferRevertsWhen_AmountExceedsBalance() public {
         token.mint(alice, 1);
 
         vm.prank(alice);
@@ -180,14 +236,10 @@ contract ERC20Test is Test {
         token.transfer(bob, 2);
     }
 
-    // Approval
-    // 1. Approval adds allowance
-    // 2. Approval reduces allowance after spending
-    //3. Can spend as much as allowed
-    // 4. can not spend more than allowance
-    //5. from zero
-    //6. to zero
-    // 7. emits event
+
+    /*//////////////////////////////////////////////
+                    Approve Tests
+    /////////////////////////////////////////////*/
     function test_ApproveUpdatesAllowance() public {
         token.mint(alice, 10);
         vm.prank(alice);
@@ -213,7 +265,7 @@ contract ERC20Test is Test {
         assertEq(token.allowance(alice, bob), 1);
     }
 
-    function test_ApproveCanNotSpendMoreThanAllowed() public {
+    function test_ApproveRevertsWhen_AllowanceIsInsufficient() public {
         token.mint(alice, 10);
         vm.prank(alice);
         token.approve(bob, 1);
@@ -221,13 +273,13 @@ contract ERC20Test is Test {
         vm.expectRevert("ERC-20: Insufficient Allowance");
         token.transferFrom(alice, charlie, 2);
     }
-    function testApproveFromZeroAddress() public {
+    function test_ApproveRevertsWhen_FromAddrIsZero() public {
         vm.prank(address(0));
         vm.expectRevert("ERC-20: Approve From Zero Address");
         token.approve(bob, 1);
     }
 
-    function test_ApproveToZeroAddress() public {
+    function test_ApproveRevertsWhen_ToAddrIsZero() public {
         token.mint(alice, 10);
         vm.prank(alice);
         vm.expectRevert("ERC-20: Approve To Zero Address");
@@ -243,19 +295,9 @@ contract ERC20Test is Test {
         token.approve(bob, 1);
     }
 
-    //Burn
-    // 1. Burn reduces balance
-    // 2. burn reduces totalsupply//
-    // 3. Burn amount //
-    // 4. burn emits event
-    function test_BurnTwo() public {
-        token.mint(alice, 10);
-        vm.prank(bob);
-        token.burn(alice, 1);
-        assertEq(token.balanceOf(alice), 9 ); 
-    } 
-    // Events
-
+    /*/////////////////////////////////////////////////////////////////////////////
+                                     Events
+    ////////////////////////////////////////////////////////////////////////////*/
     event Transfer(address indexed from, address indexed to, uint256 amount);
     event Approval(address indexed owner, address indexed spender, uint256 amount);
 }
