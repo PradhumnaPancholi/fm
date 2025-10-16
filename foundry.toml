@@ -11,6 +11,6 @@ line_length = 100
 tab_width = 4
 
 remappings = [
-  "@fm/=src/"
+  "@fm/=./src/"
 ]
 

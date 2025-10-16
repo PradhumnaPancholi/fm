@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: GPL-3.0
 pragma solidity 0.8.30;
 
-import "../src/Ownable.sol";
+import "@fm/Ownable.sol";
 
 // @title Mintable 
 // @author Pradhumna Pancholi
