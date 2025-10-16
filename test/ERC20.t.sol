@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "forge-std/Test.sol";
-import "@fm/token/ERC20.sol";
+import "../src/ERC20.sol";
 
 // @notice Mock Implementation of ERC-20 for tesing//
 contract MockERC20 is ERC20 {
@@ -26,7 +26,7 @@ contract MockERC20 is ERC20 {
  * @notice Test suite for base ERC-20 implementation
  * @author Pradhumna Pancholi
  * @dev Tests cover all of the core ERC-20 functionalities with edge cases
-*/
+ */
 contract ERC20Test is Test {
     MockERC20 public token;
 
@@ -89,7 +89,7 @@ contract ERC20Test is Test {
 
         vm.prank(alice);
         token.burn(10);
-        
+
         assertEq(token.totalSupply(), 90);
         assertEq(token.balanceOf(alice), 90);
     }
@@ -97,7 +97,7 @@ contract ERC20Test is Test {
     function test_BurnEmitsTransfer() public {
         token.mint(alice, 20);
         assertEq(token.balanceOf(alice), 20);
-        
+
         vm.expectEmit(true, true, false, true);
         emit Transfer(alice, address(0), 10);
         vm.prank(alice);
@@ -147,8 +147,8 @@ contract ERC20Test is Test {
         vm.prank(bob);
         token.burnFrom(alice, 1);
         assertEq(token.allowance(alice, bob), 0);
-
     }
+
     function test_BurnFromRevertsWhen_AllowanceIsInsufficient() public {
         token.mint(alice, 10);
         assertEq(token.balanceOf(alice), 10);
@@ -170,20 +170,19 @@ contract ERC20Test is Test {
         token.burnFrom(alice, 2);
     }
 
-
     /*///////////////////////////////
             Transfer Tests
     //////////////////////////////*/
     function test_Transfer() public {
         token.mint(alice, 10);
         assertEq(token.balanceOf(alice), 10);
-        assertEq(token.balanceOf(bob), 0); 
+        assertEq(token.balanceOf(bob), 0);
 
         vm.prank(alice);
         token.transfer(bob, 5);
 
         assertEq(token.balanceOf(alice), 5);
-        assertEq(token.balanceOf(bob), 5); 
+        assertEq(token.balanceOf(bob), 5);
     }
 
     function test_TransferEmitsEvent() public {
@@ -192,23 +191,21 @@ contract ERC20Test is Test {
         vm.expectEmit();
         emit Transfer(alice, bob, 1);
 
-
         vm.prank(alice);
         token.transfer(bob, 1);
-
     }
 
     function test_TransferRevertsWhen_ToAddrIsZero() public {
         token.mint(alice, 1);
 
         vm.prank(alice);
-        vm.expectRevert("ERC-20: Transfer To Zero Address"); 
+        vm.expectRevert("ERC-20: Transfer To Zero Address");
         token.transfer(address(0), 1);
     }
 
     function test_TransferFullAmount() public {
         token.mint(alice, 1);
-        
+
         vm.prank(alice);
         token.transfer(bob, 1);
 
@@ -219,13 +216,13 @@ contract ERC20Test is Test {
     function test_TransferChangesBalance() public {
         token.mint(alice, 10);
         assertEq(token.balanceOf(alice), 10);
-        assertEq(token.balanceOf(bob), 0); 
+        assertEq(token.balanceOf(bob), 0);
 
         vm.prank(alice);
         token.transfer(bob, 1);
 
         assertEq(token.balanceOf(alice), 9);
-        assertEq(token.balanceOf(bob), 1); 
+        assertEq(token.balanceOf(bob), 1);
     }
 
     function test_TransferRevertsWhen_AmountExceedsBalance() public {
@@ -235,7 +232,6 @@ contract ERC20Test is Test {
         vm.expectRevert("ERC-20: Amount Exceeds Balance");
         token.transfer(bob, 2);
     }
-
 
     /*//////////////////////////////////////////////
                     Approve Tests
@@ -248,6 +244,7 @@ contract ERC20Test is Test {
         token.transferFrom(alice, charlie, 1);
         assertEq(token.allowance(alice, bob), 1);
     }
+
     function test_ApproveCanSpendAllowance() public {
         token.mint(alice, 10);
         vm.prank(alice);
@@ -257,6 +254,7 @@ contract ERC20Test is Test {
         emit Transfer(alice, charlie, 1);
         token.transferFrom(alice, charlie, 1);
     }
+
     function test_ApproveAddsAllowance() public {
         token.mint(alice, 10);
         vm.prank(alice);
@@ -273,6 +271,7 @@ contract ERC20Test is Test {
         vm.expectRevert("ERC-20: Insufficient Allowance");
         token.transferFrom(alice, charlie, 2);
     }
+
     function test_ApproveRevertsWhen_FromAddrIsZero() public {
         vm.prank(address(0));
         vm.expectRevert("ERC-20: Approve From Zero Address");
@@ -284,8 +283,8 @@ contract ERC20Test is Test {
         vm.prank(alice);
         vm.expectRevert("ERC-20: Approve To Zero Address");
         token.approve(address(0), 1);
-
     }
+
     function test_ApproveEmitsEvent() public {
         token.mint(alice, 10);
 

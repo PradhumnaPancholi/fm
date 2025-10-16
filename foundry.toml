@@ -10,4 +10,7 @@ verbosity = 3 # this makes -vv default
 line_length = 100
 tab_width = 4
 
+remappings = [
+  "@fm/=src/"
+]
 

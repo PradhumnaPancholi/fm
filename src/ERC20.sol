@@ -69,7 +69,7 @@ abstract contract ERC20 {
         return true;
     }
 
-    function burn(uint256 amount) public returns (bool){
+    function burn(uint256 amount) public returns (bool) {
         _burn(msg.sender, amount);
         return true;
     }
@@ -119,8 +119,6 @@ abstract contract ERC20 {
             }
         }
     }
-
-    
 
     function _burn(address account, uint256 amount) internal virtual {
         require(account != address(0), "ERC-20: Account Is An Zero Address");

@@ -1,42 +1,33 @@
 //SPDX-License-Identifier: GPL-3.0
-pragma solidity ^0.8;
+pragma solidity 0.8.30;
 
-abstract contract Mintable {
-    // ownaer address
-    //constructor
-    // only ownder modifier//
-    // transfer
-    //renounce //
-    // mint internal//
-    // mint public
+import "../src/Ownable.sol";
 
-    address public owner;
+// @title Mintable 
+// @author Pradhumna Pancholi
+// @notice An access control implementation that provides modular and secure control over minting previleges. Its more than about just minting tokens. Its about making a sustainable, secure, and trustless system which allows a flexible path to true decentralization
+abstract contract Mintable is Ownable{
 
-    event OwnershipTransferred(address indexed oldOwner, address indexed newOwner);
+    address private _minter;
 
+    //events
+    event MinterUpdated(address indexed oldMinter, address indexed );
+    
     constructor() {
-        owner = msg.sender;
     }
 
-    modifier onlyOwner() {
-        require(msg.sender == owner, "Authorization Error: Owner Previliges Required!");
+    modifier onlyMinter() {
+        require(msg.sender == _minter);
         _;
     }
 
-    function transferOwnership(address newOwner) public virtual onlyOwner {
-        require(newOwner != address(0), "Invalid Address!");
-        emit OwnershipTransferred(msg.sender, newOwner);
-        owner = newOwner;
+    function setMinter(address newMinter) public onlyOwner{
+      require(newMinter != address(0), "Mintable: Zero Address Can Not Be Minter");
+      emit MinterUpdated(_minter, newMinter);
+      _minter = newMinter; 
     }
+    
 
-    function renounceOwnership() public virtual onlyOwner {
-        emit OwnershipTransferred(owner, address(0));
-        owner = address(0);
-    }
 
-    function mint(address to, uint256 amount) public virtual onlyOwner {
-        _mint(to, amount);
-    }
-
-    function _mint(address to, uint256 amount) internal virtual;
 }
+
