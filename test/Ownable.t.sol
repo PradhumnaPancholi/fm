@@ -73,5 +73,5 @@ contract OwnableTest is Test {
     /*///////////////////////////////////////////////////
                         Events
     //////////////////////////////////////////////////*/
-   event OwnershipTransferred(address indexed oldOwner, address indexed newOwner);
+    event OwnershipTransferred(address indexed oldOwner, address indexed newOwner);
 }
