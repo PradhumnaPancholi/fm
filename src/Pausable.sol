@@ -21,7 +21,7 @@ import "@fm/Ownable.sol";
 
 abstract contract Pausable is Ownable {
 
-  bool private _paused;
+  bool private _paused = false;
   address private _pauser;
 
   /*
@@ -74,7 +74,7 @@ abstract contract Pausable is Ownable {
   * @notice Throws error, if the contract is not paused
   */
   modifier whenPaused() {
-    require(_paused == true, "Pausable: Contract is not paused");
+    require(_paused, "Pausable: Contract is not paused");
     _;
   }
 
@@ -82,7 +82,7 @@ abstract contract Pausable is Ownable {
   * @notice Throws error, if the contract is not paused. 
   */
   modifier whenNotPaused() {
-    require(_paused == false, "Pausable: Contract is currently paused"); 
+    require(!_paused, "Pausable: Contract is currently paused"); 
     _;
   }
 
@@ -95,6 +95,7 @@ abstract contract Pausable is Ownable {
   * Monitor "Paused" for tracking
   */
   function pause() public onlyPauser {
+    require(!_paused, "Pausable: Contract is already paused");
     _paused = true;
     emit Paused(msg.sender);
   }
@@ -105,6 +106,7 @@ abstract contract Pausable is Ownable {
   * Emits "Paused" event for transparent tracking
   */
   function unpause() public onlyPauser {
+    require(_paused, "Pausable: Contract is already in service");
     _paused = false;
     emit UnPaused(msg.sender);
   }
@@ -115,7 +117,7 @@ abstract contract Pausable is Ownable {
   * Emits "PauserUpdated" event for tracking.
   */
   function setPauser(address newPauser) public onlyOwner {
-    require(newPauser != address(0), "Pausbale: Zero address cannot be a pauser");
+    require(newPauser != address(0), "Pausable: Zero address cannot be a pauser");
     address oldPauser = _pauser;
     _pauser = newPauser;
     emit PauserUpdated(oldPauser, newPauser);
