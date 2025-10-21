@@ -46,7 +46,7 @@ abstract contract Pausable is Ownable {
 
   /*
   * @notice Initializes the contract, setting up the "owner" as "pauser". 
-  * In an ideal case though, it should be different can be be changes with "setPauser"  
+  * In an ideal case though, it should be different can be be changed with "setPauser"  
   * @dev Extends on "Ownable" , and provides the "pauser" with functionalities to pause transfers, minting, burning, etc.
   */
   constructor() {
