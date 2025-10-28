@@ -2,6 +2,7 @@
 # These are defualt config
 src = "src"
 out = "out"
+solc-version = "0.8.20"
 libs = ["lib"]
 gas_reports = ["*"]
 verbosity = 3 # this makes -vv default

@@ -1,7 +1,7 @@
 // ToDo -Add functionality to pause if it feels needed after brainstorming //
 
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity 0.8.30;
+pragma solidity 0.8.20;
 
 import "@fm/Ownable.sol";
 

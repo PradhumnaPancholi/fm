@@ -1,16 +1,19 @@
 //SPDX-License-Identifier: GPL-3.0
-pragma solidity ^0.8.0;
+pragma solidity 0.8.20;
+
+import "forge-std/console.sol";
 
 abstract contract ERC20 {
     // @dev Token Metadata
-    string private _name;
-    string private _symbol;
-    uint8 private _decimals;
+    string internal _name;
+    string internal _symbol;
+    uint8 internal _decimals;
 
     // Handling Balance
-    uint256 private _totalSupply;
-    mapping(address => uint256) private _balances;
-    mapping(address => mapping(address => uint256)) private _allowances;
+    uint256 internal _totalSupply;
+
+    mapping(address => uint256) internal _balances;
+    mapping(address => mapping(address => uint256)) internal _allowances;
     //Events//
 
     event Transfer(address indexed from, address indexed to, uint256 amount);
@@ -48,9 +51,10 @@ abstract contract ERC20 {
         return _allowances[owner][spender];
     }
 
-    function balanceOf(address account) public view returns (uint256) {
-        return _balances[account];
+    function balanceOf(address account) public virtual  view returns (uint256) {
+      return _balances[account];
     }
+
     // Public Functions
 
     function transfer(address to, uint256 amount) public returns (bool) {
@@ -102,10 +106,15 @@ abstract contract ERC20 {
 
     function _mint(address account, uint256 amount) internal virtual {
         require(account != address(0), "ERC-20: Mint To Zero Address");
+        console.log("total supply before minting: ", _totalSupply);
+        console.log("balance for account before minting", _balances[account]);
         _totalSupply += amount;
         unchecked {
             _balances[account] += amount;
         }
+
+        console.log("total supply after minting", _totalSupply);
+        console.log("account balance after mint :", _balances[account]);
         emit Transfer(address(0), account, amount);
     }
 
@@ -121,13 +130,21 @@ abstract contract ERC20 {
     }
 
     function _burn(address account, uint256 amount) internal virtual {
+        console.log("Burn Logs");
+        console.log( "account", account);
+        console.log("amount to burn", amount);
+        console.log("account balance", _balances[account]);
+
         require(account != address(0), "ERC-20: Account Is An Zero Address");
         uint256 accountBalance = _balances[account];
+
+        console.log("account balance in require", accountBalance);
         require(accountBalance >= amount, "ERC-20: Amount Exceeds Account Balance");
         unchecked {
             _balances[account] = accountBalance - amount;
             _totalSupply -= amount;
         }
         emit Transfer(account, address(0), amount);
+        console.log("burn success");
     }
 }

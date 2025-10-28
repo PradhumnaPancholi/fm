@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: GPL-3.0
-pragma solidity 0.8.30;
+pragma solidity 0.8.20;
 
+import "forge-std/console.sol";
 import "@fm/ERC20.sol";
 import "@fm/Pausable.sol";
 /*
@@ -16,7 +17,7 @@ import "@fm/Pausable.sol";
 contract FMETH is ERC20, Pausable{
 
   uint256 public totalPooledETH = 0; 
-  uint256 public totalShares = 0;
+  //uint256 public totalShares = 0;
   uint256 public lastUpdatedTimestamp;
   uint256 public immutable aprBPS = 400;
   
@@ -51,6 +52,36 @@ contract FMETH is ERC20, Pausable{
     lastUpdatedTimestamp = block.timestamp;
   }
 
+  //function balanceOf(address account) public view override returns (uint256) {
+  //  bytes32 slot = keccak256(abi.encode(account, uint256(4)));
+  //  uint256 accountBalance;
+  //  
+  //  assembly {
+  //    accountBalance := sload(slot)
+  //  }
+  //  return accountBalance;
+  //}
+
+  function _burn(address account, uint256 amount) internal override {
+    bytes32 balanceSlot = keccak256(abi.encode(account, uint256(4)));
+    uint256 accountBalance;
+    
+    assembly {
+      accountBalance := sload(balanceSlot)
+    }
+
+    console.log("overriden account balance", accountBalance);
+
+    require(accountBalance >= amount, "fmETH: amount exceeds balance");
+    require(account != address(0), "fmETH: zero address can not burn");
+
+    assembly {
+      sstore(balanceSlot, sub(accountBalance, amount))
+    }
+
+    _totalSupply -= amount;
+    
+  }
   /*
   * @notice Gets triggered when a user deposits ether to mint fmETH
   * @dev Checks if:
@@ -60,11 +91,11 @@ contract FMETH is ERC20, Pausable{
   * mints fmETH 
   */ 
   function deposit() public payable whenNotPaused {
-   require(msg.value >= 0.1 ether,  "fmETH: Need minimum deposit of 0.1 ether");
+    require(msg.value >= 0.1 ether,  "fmETH: Need minimum deposit of 0.1 ether");
+    _updateRewards(); // ← UPDATE REWARDS FIRST
     uint256 newShares = getSharesByPooledETH(msg.value);
-
     totalPooledETH += msg.value;
-    totalShares += newShares;
+   // totalShares += newShares;
 
     _mint(msg.sender, newShares);
 
@@ -78,12 +109,13 @@ contract FMETH is ERC20, Pausable{
   */
 
   function withdraw(uint256 shares, uint256 minETHAmount) public whenNotPaused() {
+    //console.log("withdraw start");
     _updateRewards();
     uint256 ethAmount = getPooledETHByShares(shares);
     require(ethAmount >= minETHAmount, "fmETH: slippage too high");
-    require(address(this).balance >= ethAmount, "fmETH: amount too high");
+//    require(totalPooledETH >= ethAmount, "fmETH: amount too high");
     totalPooledETH -= ethAmount;
-    totalShares -= shares;
+    //totalShares -= shares;
 
     _burn(msg.sender, shares);
     payable(msg.sender).transfer(ethAmount);
@@ -100,7 +132,6 @@ contract FMETH is ERC20, Pausable{
   function _updateRewards() internal {
     uint256 timeElasped = block.timestamp - lastUpdatedTimestamp;
     if(timeElasped > 0) {
-      // (totalPooledETH X aprBPS x timeElasped ) / (max bps X seconds in a year)
       uint256 rewards = (timeElasped * totalPooledETH * aprBPS) / (10000 * 365 days) ;
       totalPooledETH += rewards;
       lastUpdatedTimestamp = block.timestamp;
@@ -108,15 +139,18 @@ contract FMETH is ERC20, Pausable{
     }
   }
 
+  function timeDebug() public view returns (uint256, uint256, uint256) {
+    return (block.timestamp, lastUpdatedTimestamp, totalPooledETH);
+  }
   /*
   * @notice Checks how much shares does a user get upon deposit and withdrawal //
   * @dev Calculates shares for amount of ether deposited in pool. Catches edge case for initial stage when its zero.
   */
   function getSharesByPooledETH(uint256 ethAmount) public view returns(uint256) {
-    if(totalShares == 0) {
+    if(totalSupply() == 0) {
       return ethAmount;
     }
-    uint256 shares = ethAmount * totalShares / totalPooledETH ;
+    uint256 shares = ethAmount * totalSupply() / totalPooledETH ;
     return shares; 
   }
 
@@ -127,7 +161,7 @@ contract FMETH is ERC20, Pausable{
     if(totalPooledETH == 0) {
       return shares;
     }
-    uint256 pooledETH = shares * totalPooledETH / totalShares;
+    uint256 pooledETH = shares * totalPooledETH / totalSupply();
     return pooledETH;
   }
 
