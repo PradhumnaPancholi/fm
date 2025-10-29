@@ -62,22 +62,13 @@ contract FMETH is ERC20, Pausable{
   //  return accountBalance;
   //}
 
-  function _burn(address account, uint256 amount) internal override {
-    console.log("=== FMETH _BURN ===");
-    console.log("Account:", account);
-    console.log("Amount:", amount);
-    console.log("Balance from mapping:", _balances[account]);
-    console.log("Total supply:", _totalSupply);
-    
+  function _burn(address account, uint256 amount) internal override { 
     require(account != address(0), "fmETH: zero address");
     require(_balances[account] >= amount, "fmETH: insufficient balance");
     
     _balances[account] -= amount;
     _totalSupply -= amount;
-    
-    console.log("Balance after burn:", _balances[account]);
-    console.log("Total supply after:", _totalSupply);
-    
+     
     emit Transfer(account, address(0), amount);  
   }
   /*

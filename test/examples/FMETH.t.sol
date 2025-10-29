@@ -195,20 +195,40 @@ vm.prank(alice);
 
   /*--------------------------------------------/
                     REWARDS
-  /*--------------------------------------------/
-  1. Rewards accural over time
-  2. Math pricision - small rewards don't get rounded to zero
-  3. Fair rewards for depsittors 
-  4. Emits events
-  5. Edge Cases
-    a. zero time elasped
-    b. maximum time
-    c. tiny deposits
-  6. Share price appreciation 
+  /--------------------------------------------*/
+  
+  //1. Rewards accural over time
+  //2. Math pricision - small rewards don't get rounded to zero
+  //3. Fair rewards for depsittors 
+  //4. Emits events
+  //5. Edge Cases
+  //  a. zero time elasped
+  //  b. maximum time
+  //  c. tiny deposits
+  //6. Share price appreciation 
+  function test_FMETHWithdrawAddsReward() public {
+    //ToDo : Add documention and set clean logic for mock rewards , explaing eth v/s virtual eth
+    vm.deal(address(fmeth), 10 ether); // to deal with virtual eth
+    vm.deal(alice, 1 ether);
+    vm.prank(alice);
+    fmeth.deposit{value: 1 ether}();
+    assertEq(fmeth.balanceOf(alice), 1e18);
+    assertEq(fmeth.totalPooledETH(), 1 ether);
 
-  /--------------------------------------------/
+    vm.warp(block.timestamp + 100 days);
+    vm.prank(alice);
+
+    uint256 rewards = ((block.timestamp + 100 days) * 1e18 * 400) / (10000 * 365 days) ;
+    uint256 balanceWithRewards = 1e18 + rewards;
+    console.log("with rewards : ", balanceWithRewards);
+    
+    fmeth.withdraw(1e18, 1 ether);
+    //ToDo make a cleaner, more readable code to calculate balance with rewards to check againt instead of hardcoded//
+    assertEq(address(alice).balance, 1010958904109589041);
+  }
+  /*--------------------------------------------/
         PAUSABLE => Incident Management
-  /-------------------------------------------/
+  /-------------------------------------------*/
 // incident management - pausable//
  /*/////////////////////////////////////////////
                       EVENTS
