@@ -107,29 +107,65 @@ contract FMETHTEST is Test {
 //
 //}
 
-function test_ExactStorage() public {
-  FMETH freshContract = new FMETH();
+//function test_ExactStorage() public {
+//  FMETH freshContract = new FMETH();
+//
+//  //check first 20 slots
+//  for (uint256 i = 0; i < 20; i++) {
+//    bytes32 value = vm.load(address(freshContract), bytes32(i));
+//    console.log("Fresh Contract Slot", i , ":", vm.toString(value));
+//  }
+//
+//  vm.deal(alice, 1 ether);
+//  vm.prank(alice);
+//  freshContract.deposit{value: 0.1 ether}();
+//
+//  for (uint256 i = 0; i < 20; i++) {
+//    bytes32 value = vm.load(address(freshContract), bytes32(i));
+//    console.log("After deposit Slot", i , ":", vm.toString(value));
+//
+//  }
 
-  //check first 20 slots
-  for (uint256 i = 0; i < 20; i++) {
-    bytes32 value = vm.load(address(freshContract), bytes32(i));
-    console.log("Fresh Contract Slot", i , ":", vm.toString(value));
-  }
-
-  vm.deal(alice, 1 ether);
-  vm.prank(alice);
-  freshContract.deposit{value: 0.1 ether}();
-
-  for (uint256 i = 0; i < 20; i++) {
-    bytes32 value = vm.load(address(freshContract), bytes32(i));
-    console.log("After deposit Slot", i , ":", vm.toString(value));
-
-  }
-
-bytes32 balanceSlot = keccak256(abi.encode(alice, uint256(4))); // _balances at slot 4
-uint256 balanceValue = uint256(vm.load(address(freshContract), balanceSlot));
-console.log("Balance storage:", balanceValue);
-}
+//bytes32 balanceSlot = keccak256(abi.encode(alice, uint256(4))); // _balances at slot 4
+//uint256 balanceValue = uint256(vm.load(address(freshContract), balanceSlot));
+//console.log("Balance storage:", balanceValue);
+//}
+//function  test_BalanceStorage() public {
+//  // 1. Contract Identity
+//  console.log("fmeth address : ", address(fmeth));
+//  console.log("test contract : ", address(this));
+//
+//  //2. Deploying fresh fmeth contract//
+//  FMETH fresh = new FMETH();
+//  console.log("fresh fmeth : ", address(fresh));
+//
+//  vm.deal(alice, 1 ether);
+//  vm.prank(alice);
+//  fresh.deposit{value: 0.1 ether}();
+//
+//  for (uint256 i = 0; i < 20; i++) {
+//    bytes32 value = vm.load(address(fresh), bytes32(i));
+//    console.log("slot" ,i, " : ", vm.toString(value));
+//  }
+//
+//    // 5. Check balance via function call
+//    console.log("balanceOf(alice):", fresh.balanceOf(alice));
+//    bytes32 balanceSlot = keccak256(abi.encode(alice, uint256(4)));
+//    uint256 balanceFromSlot = uint256(vm.load(address(fresh), balanceSlot));
+//    console.log("Direct balance slot access:", balanceFromSlot);
+//
+//    console.log("totalSupply() : ", fresh.totalSupply());
+//    bytes32 totalSupplySlot = bytes32(uint256(3));
+//    uint256 totalSupplyFromSlot = uint256(vm.load(address(fresh), totalSupplySlot));
+//    console.log("TotalSupply from slot:", totalSupplyFromSlot);
+//
+//    //-----------------------------//
+//   // Try withdrawing exactly the balance
+//    uint256 shares = fresh.balanceOf(alice);
+//    console.log("Shares to withdraw:", shares);  console.log("Shares to withdraw:", shares);   
+//    vm.prank(alice);
+//    fresh.withdraw(shares, 0.1 ether);
+//}
 // @dev: This test is for justchecking the "global" state
 function test_FMETHWithdraw() public {
   vm.deal(alice, 1 ether);
@@ -151,12 +187,28 @@ function test_FMETHWithdraw() public {
 //  uint256 balanceValue = uint256(vm.load(address(fmeth), balanceSlot));
 //  console.log('balance storage', balanceValue);
 //
+vm.prank(alice);
   fmeth.withdraw(1, 0);    
     
 }
 
 
-// rewards//
+  /*--------------------------------------------/
+                    REWARDS
+  /*--------------------------------------------/
+  1. Rewards accural over time
+  2. Math pricision - small rewards don't get rounded to zero
+  3. Fair rewards for depsittors 
+  4. Emits events
+  5. Edge Cases
+    a. zero time elasped
+    b. maximum time
+    c. tiny deposits
+  6. Share price appreciation 
+
+  /--------------------------------------------/
+        PAUSABLE => Incident Management
+  /-------------------------------------------/
 // incident management - pausable//
  /*/////////////////////////////////////////////
                       EVENTS

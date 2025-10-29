@@ -63,24 +63,22 @@ contract FMETH is ERC20, Pausable{
   //}
 
   function _burn(address account, uint256 amount) internal override {
-    bytes32 balanceSlot = keccak256(abi.encode(account, uint256(4)));
-    uint256 accountBalance;
+    console.log("=== FMETH _BURN ===");
+    console.log("Account:", account);
+    console.log("Amount:", amount);
+    console.log("Balance from mapping:", _balances[account]);
+    console.log("Total supply:", _totalSupply);
     
-    assembly {
-      accountBalance := sload(balanceSlot)
-    }
-
-    console.log("overriden account balance", accountBalance);
-
-    require(accountBalance >= amount, "fmETH: amount exceeds balance");
-    require(account != address(0), "fmETH: zero address can not burn");
-
-    assembly {
-      sstore(balanceSlot, sub(accountBalance, amount))
-    }
-
+    require(account != address(0), "fmETH: zero address");
+    require(_balances[account] >= amount, "fmETH: insufficient balance");
+    
+    _balances[account] -= amount;
     _totalSupply -= amount;
     
+    console.log("Balance after burn:", _balances[account]);
+    console.log("Total supply after:", _totalSupply);
+    
+    emit Transfer(account, address(0), amount);  
   }
   /*
   * @notice Gets triggered when a user deposits ether to mint fmETH

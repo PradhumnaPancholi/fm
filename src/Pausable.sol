@@ -21,8 +21,8 @@ import "@fm/Ownable.sol";
 
 abstract contract Pausable is Ownable {
 
-  bool private _paused = false;
-  address private _pauser;
+  bool internal _paused = false;
+  address internal _pauser;
 
   /*
   * @notice Emitted when the contract is paused
