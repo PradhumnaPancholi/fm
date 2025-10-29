@@ -11,7 +11,7 @@ contract MockOwnableERC20Token is ERC20, Ownable {
     //@dev This deploys a mock ERC-20 token, and makes the deploying address its "owner"
     constructor(string memory name, string memory symbol, uint8 decimals)
         ERC20(name, symbol, decimals)
-        Ownable()
+//        Ownable()
     {}
 
     function mint(address to, uint256 amount) public onlyOwner {

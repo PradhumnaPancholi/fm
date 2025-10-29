@@ -12,8 +12,8 @@ import "../src/Mintable.sol";
 contract MockERC20Mintable is ERC20, Ownable, Mintable {
     constructor(string memory name, string memory symbol, uint8 decimals)
         ERC20(name, symbol, decimals)
-        Ownable()
-        Mintable()
+        //Ownable() - temporarily comment until diamond pattern , leanearization, and architecture bewttern ownable and mintable is fixed//
+  
     {}
 
     function mint(address to, uint256 amount) public onlyMinter {
