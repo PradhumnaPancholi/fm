@@ -21,6 +21,7 @@ contract FMETHTEST is Test {
     charlie = makeAddr("charlie");
 
     fmeth = new FMETH();
+//    vm.deal(address(fmeth), 1 ether);
   }
 
   /*---------------------------------------------
@@ -193,9 +194,9 @@ vm.prank(alice);
 }
 
 
-  /*--------------------------------------------/
+  /*--------------------------------------------
                     REWARDS
-  /--------------------------------------------*/
+  ---------------------------------------------*/
   
   //1. Rewards accural over time
   //2. Math pricision - small rewards don't get rounded to zero
@@ -208,7 +209,7 @@ vm.prank(alice);
   //6. Share price appreciation 
   function test_FMETHWithdrawAddsReward() public {
     //ToDo : Add documention and set clean logic for mock rewards , explaing eth v/s virtual eth
-    vm.deal(address(fmeth), 10 ether); // to deal with virtual eth
+    vm.deal(address(fmeth), 1 ether); // to deal with virtual eth
     vm.deal(alice, 1 ether);
     vm.prank(alice);
     fmeth.deposit{value: 1 ether}();
@@ -218,18 +219,101 @@ vm.prank(alice);
     vm.warp(block.timestamp + 100 days);
     vm.prank(alice);
 
-    uint256 rewards = ((block.timestamp + 100 days) * 1e18 * 400) / (10000 * 365 days) ;
-    uint256 balanceWithRewards = 1e18 + rewards;
-    console.log("with rewards : ", balanceWithRewards);
+    //uint256 rewards = ((block.timestamp + 100 days) * 1e18 * 400) / (10000 * 365 days) ;
+    //uint256 balanceWithRewards = 1e18 + rewards;
+    //console.log("with rewards : ", balanceWithRewards);
     
     fmeth.withdraw(1e18, 1 ether);
     //ToDo make a cleaner, more readable code to calculate balance with rewards to check againt instead of hardcoded//
     assertEq(address(alice).balance, 1010958904109589041);
   }
+
+  function test_FMETHPreciseRewards() public {
+    vm.deal(alice, 1 ether);
+    vm.prank(alice);
+    fmeth.deposit{value:0.1 ether}();
+    assertEq(fmeth.balanceOf(alice), 1e17);
+
+    vm.warp(block.timestamp + 2 days);
+    vm.prank(alice);
+
+    
+    //Annual rewards: 0.1 ETH × 0.04 = 0.004 ETH
+    //Daily rewards: 0.004 ETH ÷ 365 ≈ 0.0000109589 ETH
+    //2 days rewards: 0.0000109589 × 2 ≈ 0.0000219178 ETH
+    vm.deal(address(fmeth), 0.5 ether); // this is to deal with funds for contract to pay for transaction
+    fmeth.withdraw(1e17,0.1 ether);
+    assertGt(address(alice).balance, 0.9 ether + 0.1000219178 ether);
+
+  }
+
+  function test_FMETHFairRewardsForDepositors() public {
+    vm.deal(alice, 10 ether);
+    vm.deal(bob, 10 ether);
+
+    vm.prank(alice);
+    fmeth.deposit{value: 10 ether}();
+    uint256 aShares = fmeth.balanceOf(alice);
+    vm.warp(block.timestamp + 30 days);
+    vm.prank(bob);
+    fmeth.deposit{value: 10 ether}();
+    uint256 bShares = fmeth.balanceOf(bob);
+    vm.warp(block.timestamp + 30 days);
+
+    vm.deal(address(fmeth), 50 ether); // to deal with virtual ETH for fees//
+ 
+    //Annual rewards: 1 ETH × 0.04 = 0.04 ETH
+    //Daily rewards: 0.04 ETH ÷ 365 ≈ 0.000109589 ETH
+    // Rewards for 30 days: 30 X 0.000109589 = 0.00328767 
+    // Rewards for 60 days: 60 X 0.000109589 = 0.00657534
+    vm.prank(alice);
+    fmeth.withdraw(aShares, 10e18);
+    vm.assertGe(address(alice).balance, 10 ether + 0.00657537 ether);
+    vm.prank(bob);
+    fmeth.withdraw(bShares, 10e18);
+    vm.assertGe(address(bob).balance, 10 ether + 0.00328767 ether);
+    console.log('alice', address(alice).balance, address(bob).balance);
+  }
+
+  function testFMETHWithdrawEmitsEvent () public {
+    vm.deal(alice, 1 ether);
+    vm.prank(alice);
+    fmeth.deposit{value: 1 ether}();
+    assertEq(fmeth.balanceOf(alice), 1e18);
+
+    vm.expectEmit();
+    vm.prank(alice);
+    emit Withdrawn(alice, 1e17, 1e17);
+    fmeth.withdraw(1e17, 1e17);
+  
+  }
+
   /*--------------------------------------------/
         PAUSABLE => Incident Management
   /-------------------------------------------*/
-// incident management - pausable//
+ function test_FMETHMintReverts_WhenPaused() public {
+    vm.prank(owner);
+    fmeth.pause();
+    
+    vm.deal(alice, 0.1 ether);
+    vm.prank(alice);
+
+    vm.expectRevert("Pausable: Contract is currently paused");
+    fmeth.deposit{value: 0.1 ether}();
+ }
+
+ function test_FMETHWithdrawReverts_WhenPaused() public {
+   vm.deal(alice, 1 ether);
+   vm.prank(alice);
+   fmeth.deposit{value: 0.1 ether}();
+
+   vm.prank(owner);
+   fmeth.pause();
+
+   vm.prank(alice);
+   vm.expectRevert("Pausable: Contract is currently paused");
+   fmeth.withdraw(1e17, 1e17);
+ }
  /*/////////////////////////////////////////////
                       EVENTS
  /////////////////////////////////////////////*/

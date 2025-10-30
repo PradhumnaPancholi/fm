@@ -102,7 +102,7 @@ contract FMETH is ERC20, Pausable{
     _updateRewards();
     uint256 ethAmount = getPooledETHByShares(shares);
     require(ethAmount >= minETHAmount, "fmETH: slippage too high");
-//    require(totalPooledETH >= ethAmount, "fmETH: amount too high");
+    require(totalPooledETH >= ethAmount, "fmETH: amount too high");
     totalPooledETH -= ethAmount;
     //totalShares -= shares;
 
