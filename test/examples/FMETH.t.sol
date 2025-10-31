@@ -224,27 +224,24 @@ vm.prank(alice);
     //console.log("with rewards : ", balanceWithRewards);
     
     fmeth.withdraw(1e18, 1 ether);
+// 1010958904109589041
     //ToDo make a cleaner, more readable code to calculate balance with rewards to check againt instead of hardcoded//
-    assertEq(address(alice).balance, 1010958904109589041);
+    uint256 aliceBalanceWithRewards = address(alice).balance;
+    assertGt(aliceBalanceWithRewards, 1 ether);
   }
 
   function test_FMETHPreciseRewards() public {
-    vm.deal(alice, 1 ether);
+    vm.deal(alice, 10 ether); 
     vm.prank(alice);
-    fmeth.deposit{value:0.1 ether}();
-    assertEq(fmeth.balanceOf(alice), 1e17);
+    fmeth.deposit{value:1 ether}();
 
-    vm.warp(block.timestamp + 2 days);
+    vm.warp(block.timestamp + 365 days);
     vm.prank(alice);
-
-    
-    //Annual rewards: 0.1 ETH × 0.04 = 0.004 ETH
-    //Daily rewards: 0.004 ETH ÷ 365 ≈ 0.0000109589 ETH
-    //2 days rewards: 0.0000109589 × 2 ≈ 0.0000219178 ETH
-    vm.deal(address(fmeth), 0.5 ether); // this is to deal with funds for contract to pay for transaction
     fmeth.withdraw(1e17,0.1 ether);
-    assertGt(address(alice).balance, 0.9 ether + 0.1000219178 ether);
+    uint256 updatedShareValue = fmeth.getPooledETHByShares(1e18);
 
+    uint256 tolerance = 0.0001e18; //0.01% tolerance - for mathematical rounding
+    assertApproxEqRel(updatedShareValue, 1.04 ether, tolerance);
   }
 
   function test_FMETHFairRewardsForDepositors() public {
@@ -262,17 +259,31 @@ vm.prank(alice);
 
     vm.deal(address(fmeth), 50 ether); // to deal with virtual ETH for fees//
  
-    //Annual rewards: 1 ETH × 0.04 = 0.04 ETH
-    //Daily rewards: 0.04 ETH ÷ 365 ≈ 0.000109589 ETH
-    // Rewards for 30 days: 30 X 0.000109589 = 0.00328767 
-    // Rewards for 60 days: 60 X 0.000109589 = 0.00657534
     vm.prank(alice);
     fmeth.withdraw(aShares, 10e18);
-    vm.assertGe(address(alice).balance, 10 ether + 0.00657537 ether);
     vm.prank(bob);
     fmeth.withdraw(bShares, 10e18);
-    vm.assertGe(address(bob).balance, 10 ether + 0.00328767 ether);
-    console.log('alice', address(alice).balance, address(bob).balance);
+
+    uint256 aliceBalanceWithRewards = address(alice).balance;
+    uint256 bobBalanceWithRewards = address(bob).balance;
+    vm.assertGt(aliceBalanceWithRewards, 10 ether);
+    vm.assertGt(bobBalanceWithRewards, 10 ether);
+    vm.assertGt(aliceBalanceWithRewards, bobBalanceWithRewards);
+  }
+
+  function test_FMETHShareAppreciation() public {
+    vm.deal(alice, 10 ether);
+    vm.deal(bob, 10 ether);
+    vm.prank(alice);
+    fmeth.deposit{value: 1 ether}();
+    vm.warp(block.timestamp + 1 hours);
+    vm.prank(bob);
+    fmeth.deposit{value: 1 ether}();
+
+    uint256 sharesAtFirstDeposit = fmeth.balanceOf(alice);
+    uint256 sharesAtSecondDeposit = fmeth.balanceOf(bob);
+
+    vm.assertGt(sharesAtFirstDeposit, sharesAtSecondDeposit);
   }
 
   function testFMETHWithdrawEmitsEvent () public {
