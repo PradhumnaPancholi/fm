@@ -1,11 +1,24 @@
-.PHONY: ft test coverage
 
+DOC_TITLE      := "fm - Modular and Secure Solidity Snippets"
+DOC_HOMEPAGE   := "https://github.com/pradhumnapancholi/fm"
+DOC_GITHUB     := "pradhumnapancholi/fm"
+DOC_BRANCH     := "main"
+DOC_OUTPUT     := "docs"
+
+.PHONY: ft test coverage
 ft:
 	forge coverage 
 
-# Sepolia Deploy
-fdl:
-	forge script ./scripts/DeploySERC20.s.sol:SERC20Script --rpc-url http:localhost:8545 --account dummy1 --sender 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 --broadcast -- --vvvv
+.PHONY: doc
+doc:
+	@echo "Building contracts..."
+	@echo "Generating documentation"
+	@set -e; \
+	forge build; \
+	forge doc --out $(DOC_OUTPUT); \
+	sed -i 's|<title>.*</title>|<title>$(DOC_TITLE)</title>|' $(DOC_OUTPUT)/book/index.html; \
+	echo "Docs are ready!"
+
 # Main command - runs lint then build
 fb:  build # add linting
 
