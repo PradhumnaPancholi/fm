@@ -105,7 +105,7 @@ library TransferHelper {
     bool success;
 
     assembly {
-      success := call(30000,to,amount, 0,0,0,0);
+      success := call(30000,to,amount, 0,0,0,0)
     }
 
     if(!success) revert ETHTransferFailed();
@@ -116,7 +116,7 @@ library TransferHelper {
   * @param token The address for the token to get balance for
   * @param account The addres whose balance is needed for the given token
   */
-  function getBalance(address token, address account) internal view returns (uint256){
+  function getBalance(address token, address account) internal returns (uint256){
     (bool success, bytes memory data) = token.call(
       abi.encodeWithSelector(IERC20.balanceOf.selector, account)
     );
