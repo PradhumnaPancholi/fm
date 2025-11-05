@@ -1,0 +1,22 @@
+[build]
+  command = "make doc"
+  publish = "docs/book"
+
+[build.environment]
+  NODE_VERSION = "18"  # Optional, if needed for tools
+
+# Auto-install Foundry (via script)
+[build.processing]
+  skip_processing = false
+
+# Custom build script (runs before command)
+[build.lifecycle]
+  pre_build = """
+    # Install Foundry
+    curl -L https://foundry.paradigm.xyz | bash
+    source ~/.bashrc
+    foundryup
+
+    # Install make (Ubuntu has it, but ensure)
+    sudo apt-get update && sudo apt-get install -y make
+  """
