@@ -20,6 +20,16 @@ jobs:
           foundryup
           forge --version
 
+      - name: Format code (auto-fix)
+        run: |
+          export PATH="$HOME/.foundry/bin:$PATH"
+          forge fmt
+          
+      - name: Check formatting
+        run: |
+          export PATH="$HOME/.foundry/bin:$PATH"
+          forge fmt --check
+
       - name: Generate docs
         run: make doc
 
@@ -36,6 +46,6 @@ jobs:
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./docs/book  # Correct path to the book directory
+          publish_dir: ./docs/book
           publish_branch: gh-pages
           force_orphan: true
