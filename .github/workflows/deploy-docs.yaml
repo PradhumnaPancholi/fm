@@ -7,6 +7,9 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
     steps:
       - uses: actions/checkout@v4
 
@@ -17,16 +20,22 @@ jobs:
           foundryup
           forge --version
 
-      - name: Install make
-        run: sudo apt-get update && sudo apt-get install -y make
-
       - name: Generate docs
         run: make doc
 
-      - name: Deploy
+      - name: Verify docs structure
+        run: |
+          echo "Checking docs directory structure:"
+          ls -la docs/
+          echo "Checking book directory:"
+          ls -la docs/book/
+          echo "HTML files found:"
+          find docs/book/ -name "*.html" | head -5
+
+      - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: docs/book
+          publish_dir: ./docs/book  # Correct path to the book directory
           publish_branch: gh-pages
           force_orphan: true
