@@ -13,22 +13,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Foundry
-        run: |
-          curl -L https://foundry.paradigm.xyz | bash
-          export PATH="$HOME/.foundry/bin:$PATH"
-          foundryup
-          forge --version
+      - name: Setup Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
 
-      - name: Format code (auto-fix)
-        run: |
-          export PATH="$HOME/.foundry/bin:$PATH"
-          forge fmt
-          
-      - name: Check formatting
-        run: |
-          export PATH="$HOME/.foundry/bin:$PATH"
-          forge fmt --check
+      - name: Format code
+        run: forge fmt
 
       - name: Generate docs
         run: make doc
