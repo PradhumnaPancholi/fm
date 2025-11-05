@@ -3,20 +3,23 @@
   publish = "docs/book"
 
 [build.environment]
-  NODE_VERSION = "18"  # Optional, if needed for tools
+  NODE_VERSION = "18"
 
-# Auto-install Foundry (via script)
-[build.processing]
-  skip_processing = false
+# Install Foundry before build
+[[plugins]]
+  package = "netlify-plugin-shell"
 
-# Custom build script (runs before command)
-[build.lifecycle]
-  pre_build = """
-    # Install Foundry
-    curl -L https://foundry.paradigm.xyz | bash
-    source ~/.bashrc
-    foundryup
-
-    # Install make (Ubuntu has it, but ensure)
-    sudo apt-get update && sudo apt-get install -y make
-  """
+  [plugins.inputs]
+    commands = [
+      """
+      echo "Installing Foundry..."
+      if ! command -v forge >/dev/null 2>&1; then
+        curl -L https://foundry.paradigm.xyz | bash
+        export PATH="$HOME/.foundry/bin:$PATH"
+        foundryup
+      else
+        echo "Foundry already installed"
+      fi
+      forge --version
+      """
+    ]
