@@ -2,32 +2,30 @@ name: Deploy Docs
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
 
 jobs:
-  deploy: 
+  deploy:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write # for pushing to gh-pages
-
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Install Foundry
-        uses: foundry-rs/foundry-toolchain@v1
-      
+        run: |
+          curl -L https://foundry.paradigm.xyz | bash
+          echo "$HOME/.foundry/bin" >> $GITHUB_PATH
+          foundryup
+
       - name: Install make
         run: sudo apt-get update && sudo apt-get install -y make
-      
-      - name: Generate docs using make
-        run: |
-          make doc
-      - name: Deploy to GitHub Pages
+
+      - name: Generate docs
+        run: make doc
+
+      - name: Deploy
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./docs/book
+          publish_dir: docs/book
           publish_branch: gh-pages
           force_orphan: true
-          allow_empty_commit: true
