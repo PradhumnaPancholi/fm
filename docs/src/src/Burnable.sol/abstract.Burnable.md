@@ -1,5 +1,5 @@
 # Burnable
-[Git Source](https://github.com/PradhumnaPancholi/fm/blob/45f598020bcf465d88cc4d54367f89ee9613baad/src/Burnable.sol)
+[Git Source](https://github.com/PradhumnaPancholi/fm/blob/599e5f65db21026d1a2cf81c2b31c737c15f6bc3/src/Burnable.sol)
 
 **Inherits:**
 [Ownable](/src/Ownable.sol/abstract.Ownable.md)

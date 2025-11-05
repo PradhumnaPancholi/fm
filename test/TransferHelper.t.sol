@@ -30,12 +30,17 @@ contract MockStandardToken is IERC20 {
     _balances[to] += amount;
     return true;
   }
-  function allowance(address owner, address spender) external view returns (uint256) {return _allowances[owner][spender];}
+  function allowance(address owner, address spender) external view returns (uint256) {
+    uint256 currentAllowance =  _allowances[owner][spender];
+    console.log("current allowance", currentAllowance);
+    return currentAllowance;
+  }
   function approve(address spender, uint256 amount) external returns (bool) {
     require(_totalSupply >= amount, "MST: approval can not be higher than total supply");
     require(msg.sender != address(0), "MST: owner can not be a zero address");
     require(spender != address(0), "MST: spender can not be a zero address");
     _allowances[msg.sender][spender] = amount;
+    console.log("allowance", _allowances[msg.sender][spender]);
     return true;
   }
   function transferFrom(address from, address to, uint256 amount) external returns (bool) {
@@ -77,25 +82,25 @@ contract MockUSDT {
   function allowance(address owner, address spender) external view returns (uint256){return _allowances[owner][spender];} 
   function balanceOf(address account) external  view returns (uint256){return _balances[account];}
   function transfer(address to, uint256 amount) external {
-    require(_totalSupply >= amount, "MST: amount can not be higher than total supply");
-    require(to != address(0), "MST: can not sent to zero address");
-    require(_balances[msg.sender] >=  amount, "MST: insufficient funds");
+    require(_totalSupply >= amount, "MUSDT: amount can not be higher than total supply");
+    require(to != address(0), "MUSDT: can not sent to zero address");
+    require(_balances[msg.sender] >=  amount, "MUSDT: insufficient funds");
     _balances[msg.sender] -= amount;
     _balances[to] += amount;
   }
   function approve(address spender, uint256 amount) external {
-    require(_totalSupply >= amount, "MST: approval can not be higher than total supply");
-    require(msg.sender != address(0), "MST: owner can not be a zero address");
-    require(spender != address(0), "MST: spender can not be a zero address");
+    require(_totalSupply >= amount, "MUSDT: approval can not be higher than total supply");
+    require(msg.sender != address(0), "MUSDT: owner can not be a zero address");
+    require(spender != address(0), "MUSDT: spender can not be a zero address");
     _allowances[msg.sender][spender] = amount;
   }
   
   function transferFrom(address from, address to, uint256 amount) external { 
-    require(_totalSupply >= amount, "MST: amount can not be higher than total supply");
-    require(from != address(0), "MST: from address can not be zero");
-    require(to != address(0), "MST: to address can not zero address");
-    require(_allowances[from][msg.sender] >= amount, "MST: not enough allowance");
-    require(_balances[from] >=  amount, "MST: insufficient funds");
+    require(_totalSupply >= amount, "MUSDT: amount can not be higher than total supply");
+    require(from != address(0), "MUSDT: from address can not be zero");
+    require(to != address(0), "MUSDT: to address can not zero address");
+    require(_allowances[from][msg.sender] >= amount, "MUSDT: not enough allowance");
+    require(_balances[from] >=  amount, "MUSDT: insufficient funds");
     _balances[from] -= amount;
     _balances[to] += amount;
   }
@@ -144,6 +149,43 @@ contract TransferHelperTest is Test {
     vm.prank(alice);
     TransferHelper.safeTransfer(address(musdt), bob, 10);
   }
+
+//  function test_SafeApprove_Standard_Success() public  {
+//    vm.prank(alice);
+//    TransferHelper.safeApprove(address(mst), bob, 5);
+////    assertEq(mst.allowance(alice, bob),5);
+//
+//    // Debug: check allowance directly
+//    uint256 allowance = mst.allowance(alice, bob);
+//    console.log("Final allowance:", allowance);
+//     uint256 allb = mst.allowance(bob, alice);
+//console.log("dsd", allb);
+//  }
+//  function test_SafeTransferFrom_Standard_Success() public {
+//    vm.prank(alice);
+//    TransferHelper.safeApprove(address(mst), bob, 5);
+//    vm.prank(bob);
+//    TransferHelper.safeTransferFrom(address(mst), alice, charlie, 5);
+//  }
+
+//  function test_SafeTransferFrom_MUSDT_Success() public {
+//    vm.prank(alice);
+//    TransferHelper.safeApprove(address(musdt), bob, 5);
+//    vm.prank(bob);
+//    TransferHelper.safeTransferFrom(address(musdt), alice, charlie, 1);
+//  }
+  function test_ApproveAndTransferFrom_InOneFunction() public {
+    // Do approve AND transferFrom in same test
+    vm.prank(alice);
+    TransferHelper.safeApprove(address(mst), bob, 5);
+    
+    // Check allowance immediately
+    uint256 allowance = mst.allowance(alice, bob);
+    console.log("Allowance after approve:", allowance);
+    
+    vm.prank(bob);
+    TransferHelper.safeTransferFrom(address(mst), alice, charlie, 5);
+}
 
 
 } 

@@ -3,6 +3,8 @@
 # src
   - [Burnable](src/Burnable.sol/abstract.Burnable.md)
   - [ERC20](src/ERC20.sol/abstract.ERC20.md)
+  - [IERC20](src/IERC20.sol/interface.IERC20.md)
   - [Mintable](src/Mintable.sol/abstract.Mintable.md)
   - [Ownable](src/Ownable.sol/abstract.Ownable.md)
   - [Pausable](src/Pausable.sol/abstract.Pausable.md)
+  - [TransferHelper](src/TransferHelper.sol/library.TransferHelper.md)
