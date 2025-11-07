@@ -6,12 +6,12 @@ import "@fm/Mintable.sol";
 import "@fm/Burnable.sol";
 import "@fm/Pausable.sol";
 /*
-* @title fmDAI
+* @title FAI
 * @author Pradhumna Pancholi
-* @notice A DAI like implementation of collateralized stablecoin using fm library
+* @notice A DAI like implementation of collateralized stablecoin using fm-library
 */
 
-contract FAI is ERC20, Mintable, Burnable, Pausable{
+contract FAI is ERC20, Mintable, Burnable{
 
   constructor() ERC20("FAI Stablecoin", "FAI", 18){}
 

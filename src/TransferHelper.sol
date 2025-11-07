@@ -2,6 +2,7 @@
 pragma solidity 0.8.20;
 
 import "@fm/IERC20.sol";
+import "forge-std/console.sol";
 
 library TransferHelper {
  
@@ -79,21 +80,34 @@ library TransferHelper {
   * @custom:security This function resets the allowance to zero at first. And then updates it to given amount. This is to be explicit about allowances as it can lead to loss of funds if not handled properly. It is more secure to perform multiple "approve" transaction than one single "max" approve.
   */ 
   function safeApprove(address token, address spender, uint256 amount) internal{
-    (bool success1, bytes memory data1) = token.call(
-      // Resets approval to zero
-      abi.encodeWithSelector(IERC20.approve.selector, spender, 0)
+    (bool success, bytes memory data) = token.call(
+      abi.encodeWithSelector(IERC20.approve.selector, spender, amount)
     );
 
-    if(!success1) revert ApprovalFailed();
-    if(data1.length >= 32 && !abi.decode(data1, (bool))) revert ApprovalFailed();
-
-    if(amount > 0) {
-      (bool success2, bytes memory data2) = token.call(
-        abi.encodeWithSelector(IERC20.approve.selector, spender, amount)
-      );
-      if(!success2) revert ApprovalFailed();
-      if(data2.length>= 32 && !abi.decode(data2, (bool))) revert ApprovalFailed();
-    }
+    if(!success) revert ApprovalFailed();
+    if(data.length >=32 && !abi.decode(data, (bool))) revert ApprovalFailed();
+    // Resets approval to zero
+ //   IERC20(token).approve(spender, 0);
+    
+   // if(amount > 0){
+    //  IERC20(token).approve(spender, amount);
+    //}
+//    if(amount > 0) {
+//      (bool success, bytes memory data) = token.call(
+//        abi.encodeWithSelector(IERC20.approve.selector, spender, amount)
+//      );
+//      console.log("second call, set to amount", success);
+//      console.log("second data length", data.length);
+//      if(!success) revert ApprovalFailed();
+//      if(data.length>= 32 ) {
+//        bool returnValue = abi.decode(data, (bool));
+//        if(!returnValue) {
+//          console.log("returnvalue", returnValue);
+//          revert ApprovalFailed();
+//        }
+//      }
+//    }
+//    console.log("safe approve ends");
   }
 
   /*
