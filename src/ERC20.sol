@@ -22,7 +22,6 @@ abstract contract ERC20 {
      * @dev Sets the values for name, symbol, and decimals
      *
      */
-
     constructor(string memory name_, string memory symbol_, uint8 decimals_) {
         _name = name_;
         _symbol = symbol_;

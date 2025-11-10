@@ -10,7 +10,8 @@ contract MockPriceFeed {
   } 
 }
 
-import "@fm/IERC20.sol";
+import "@fm/IMintableERC20.sol";
+
 /*
 * @author Pradhumna Pancholi
 * @title FAIVault
@@ -23,7 +24,7 @@ contract FAIVault {
 
   MockPriceFeed public priceFeed;
   
-  IERC20 public immutable fai;
+  IMintableERC20 public immutable fai;
 
   struct Position {
     uint256 collateral;
@@ -42,7 +43,7 @@ contract FAIVault {
   mapping(address => Position) positions;
 
   constructor(address faiAddress) {
-    fai = IERC20(faiAddress);
+    fai = IMintableERC20(faiAddress);
     priceFeed = new MockPriceFeed();
   }
 
