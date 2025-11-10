@@ -32,7 +32,8 @@ contract FAIVault {
 
   event FAIMinted(address indexed account, uint256 indexed amount);
   event FAIBurned(address indexed account, uint256 indexed amount);
-
+  event FAIPositionLiquidated(address indexed account, uint256 indexed ethAmount, uint256 indexed faiAmount);
+  
   uint256 public totalCollateral;
   uint256 public debt;
   uint256 public constant LIQUIDATION_RATIO = 1.5e18;
@@ -49,7 +50,7 @@ contract FAIVault {
     require(amount > 0, "FAIVault: can not mint zero tokens");
     require(msg.value > 0, "FAIVault: can not mint with zero ETH");
     
-    uint256 providedCollateral = (msg.value / 1e18) * priceFeed.price();
+    uint256 providedCollateral = (msg.value * priceFeed.price()) / 1e18;
     uint256 minCollateralRequired = amount * LIQUIDATION_RATIO / 1e18;
     require(providedCollateral >= minCollateralRequired, "FAIVault: not enough collateral");
    
@@ -85,7 +86,7 @@ contract FAIVault {
     
     if(position.debt == 0) return type(uint256).max;
 
-    uint256 collateralValue = position.collateral * priceFeed.price();
+    uint256 collateralValue = (position.collateral * 1e18 )/ priceFeed.price();
     return (collateralValue * 1e18) / position.debt;
   }
 
@@ -95,21 +96,13 @@ contract FAIVault {
   }
  
   function liquidate(address user) public{
-    //1. check if eth is undercollateralized
-    // 2. cal how much debt to liquidate
-    // 3. take liquidaters FAI
-    // 4.  cal how much eth should liquidater get (with discount)
-    // 5. update state
-    //6. give liquidater eth 
-    //7/ burn fai
-    //8.  emit
-    require(LIQUIDATION_RATIO > _getCollateralRatio  , "FAIVault: position is safe");
+    require(LIQUIDATION_RATIO > _getCollateralRatio(user) , "FAIVault: position is safe");
 
     uint256 faiToLiquidate = _calculateMaxLiquidation(user);
-    fai.transferFrom(user, address(this), faiToLiquidate);
+    fai.transferFrom(msg.sender, address(this), faiToLiquidate);
 
-    uint256 ethForLiquidater = (faiToLiquidate * 1e18) / priceFeed.price();
-    uint256 discountedETH = ethForLiquidater * (1e18 - LIQUIDATION_PENALTY) / 1e18;
+    uint256 ethForLiquidation = (faiToLiquidate * 1e18) / priceFeed.price();
+    uint256 discountedETH = ethForLiquidation * (1e18 - LIQUIDATION_PENALTY) / 1e18;
 
     positions[user].collateral -= discountedETH;
     positions[user].debt -= faiToLiquidate;
@@ -120,6 +113,6 @@ contract FAIVault {
 
     fai.burn(address(this), faiToLiquidate);
 
-//    emit Liquidated();
+    emit FAIPositionLiquidated(user, discountedETH, faiToLiquidate);
   }
 }
