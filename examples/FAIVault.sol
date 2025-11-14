@@ -47,6 +47,11 @@ contract FAIVault {
     priceFeed = new MockPriceFeed();
   }
 
+  function getPosition(address user) public view returns (uint256 collateral, uint256 debt) {
+    Position memory position = positions[user];
+    return (position.collateral, position.debt);
+  }
+
   function depositCollateralAndMint(uint256 amount) payable public returns (bool){
     require(amount > 0, "FAIVault: can not mint zero tokens");
     require(msg.value > 0, "FAIVault: can not mint with zero ETH");
@@ -65,12 +70,27 @@ contract FAIVault {
     return true;
   }
 
+  function _checkPositionSafety(address account, uint256 faiToBurn, uint256 ethToWithdraw) internal view returns (bool) {
+    (uint256 collateral, uint256 debt) = getPosition(account);
+
+    uint256 newCollateral = collateral - ethToWithdraw;
+    uint256 newDebt = debt - faiToBurn;
+
+    if(newDebt > 0) {
+      uint256 minCollateralRequired = newDebt * LIQUIDATION_RATIO / priceFeed.price() ;
+      require(newCollateral >= minCollateralRequired, "FAIVault: not enough collateral");
+      return true;
+    }
+    return true;
+  }
+
   function burnAndWithdrawCollateral(uint256 faiToBurn, uint256 ethToWithdraw) public returns (bool){
     require(faiToBurn > 0, "FAIVault: can not burn zero tokens");
-    
-    uint256 ethValueForFai = (faiToBurn * priceFeed.price()) / 1e18;
+    uint256 ethValueForFai = faiToBurn * 1e18 /priceFeed.price();  
+    //uint256 ethValueForFai = (faiToBurn * priceFeed.price()) / 1e18;
     //uint256 collateralToWithdraw = amount * LIQUIDATION_RATIO / 1e18;
-    require(ethValueForFai >= ethToWithdraw, "FAIVault: ETH withdrawal amount too high");
+    //require(ethValueForFai >= ethToWithdraw, "FAIVault: ETH withdrawal amount too high");
+    require(_checkPositionSafety(msg.sender, faiToBurn, ethToWithdraw), "FaiVault: unsafe position");
     positions[msg.sender].collateral -= ethToWithdraw;
     positions[msg.sender].debt -= faiToBurn;
     totalCollateral -= ethToWithdraw;
