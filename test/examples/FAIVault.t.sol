@@ -2,7 +2,7 @@
 pragma solidity 0.8.20;
 
 import "../../examples/FAIVault.sol";
-import "forge-std/Test.sol";
+import  {Test} from "forge-std/Test.sol";
 import "../../examples/FAI.sol";
 
 contract FAIVaultTest is Test {
@@ -51,6 +51,19 @@ contract FAIVaultTest is Test {
     assertEq(debt, 5000e18);
   }
 
+  function test_MintingEmitsEvent() public {
+    vm.prank(alice);
+    vm.expectEmit();
+    emit FAIMinted(alice, 10000); 
+    vault.depositCollateralAndMint{value: 2 ether}(10000);
+  }
+
+  function test_DepositAndMintUpdatedVaultState() public {
+    vm.prank(alice);
+    vault.depositCollateralAndMint{value: 2 ether}(10000);
+    assertEq(vault.totalCollateral(), 2e18);
+    assertEq(vault.debt(), 10000);
+  }
   /*
     1. widhtdraw and burn happy path
   2. emits event
@@ -72,4 +85,9 @@ contract FAIVaultTest is Test {
     vault.burnAndWithdrawCollateral(5000e18, 1 ether);
 
   }
+  //---------------------Events----------------------//
+  event FAIMinted(address indexed account, uint256 indexed amount);
+  event FAIBurned(address indexed account, uint256 indexed amount);
+  event FAIPositionLiquidated(address indexed account, uint256 indexed ethAmount, uint256 indexed faiAmount);
+
 }
