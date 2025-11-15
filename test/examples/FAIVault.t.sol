@@ -51,18 +51,24 @@ contract FAIVaultTest is Test {
     assertEq(debt, 5000e18);
   }
 
-  function test_MintingEmitsEvent() public {
+  function test_Minting_EmitsEvent() public {
     vm.prank(alice);
     vm.expectEmit();
-    emit FAIMinted(alice, 10000); 
-    vault.depositCollateralAndMint{value: 2 ether}(10000);
+    emit FAIMinted(alice, 10000e18); 
+    vault.depositCollateralAndMint{value: 2 ether}(10000e18);
   }
 
-  function test_DepositAndMintUpdatedVaultState() public {
+  function test_DepositAndMint_UpdatesGlobalState() public {
     vm.prank(alice);
-    vault.depositCollateralAndMint{value: 2 ether}(10000);
+    vault.depositCollateralAndMint{value: 2 ether}(10000e18);
     assertEq(vault.totalCollateral(), 2e18);
-    assertEq(vault.debt(), 10000);
+    assertEq(vault.debt(), 10000e18);
+  }
+
+  function test_DepositAndMintReverts_WhenNotEnoughETH() public {
+    vm.prank(alice);
+    vm.expectRevert();
+    vault.depositCollateralAndMint{value: 0.5 ether}(10000e18);
   }
   /*
     1. widhtdraw and burn happy path
@@ -85,6 +91,52 @@ contract FAIVaultTest is Test {
     vault.burnAndWithdrawCollateral(5000e18, 1 ether);
 
   }
+
+  function test_WithdrawAndBurn_Partial() public {
+    vm.prank(alice);
+    vault.depositCollateralAndMint{value: 1 ether}(5000e18);
+    assertEq(fai.balanceOf(alice), 5000e18);
+
+    vm.prank(alice);
+    vault.burnAndWithdrawCollateral(1000e18, 0.1 ether);
+  }
+  function test_WithdrawAndBurn_EmitsEvent() public {
+    vm.prank(alice);
+    vault.depositCollateralAndMint{value: 1 ether}(5000e18);
+    assertEq(fai.balanceOf(alice), 5000e18);
+    
+    vm.expectEmit();
+    emit FAIBurned(alice, 5000e18);
+    vm.prank(alice);
+    vault.burnAndWithdrawCollateral(5000e18, 1 ether);
+  }
+
+  function test_WithdrawAndBurn_UpdatesGlobalState() public {
+    vm.prank(alice);
+    vault.depositCollateralAndMint{value: 1 ether}(5000e18);
+    assertEq(vault.totalCollateral(), 1e18);
+    assertEq(vault.debt(),5000e18);
+
+    vm.prank(alice);
+    vault.burnAndWithdrawCollateral(5000e18, 1 ether);
+    assertEq(vault.totalCollateral(), 0);
+    assertEq(vault.debt(), 0);
+  }
+
+  function test_WithdrawAndBurn_RevertsWhen_AttemptsToHighETH() public {
+    vm.prank(alice);
+    vault.depositCollateralAndMint{value: 1 ether}(5000e18);
+
+    vm.prank(alice);
+    vm.expectRevert("FAIVault: not enough collateral");
+    vault.burnAndWithdrawCollateral(4000e18, 1 ether);
+  }
+
+  /*////////////////////////////////////////////////////
+                        Incident Management
+  ////////////////////////////////////////////////////*/
+  
+
   //---------------------Events----------------------//
   event FAIMinted(address indexed account, uint256 indexed amount);
   event FAIBurned(address indexed account, uint256 indexed amount);
