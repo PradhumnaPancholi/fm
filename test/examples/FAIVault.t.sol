@@ -89,7 +89,9 @@ contract FAIVaultTest is Test {
 
     vm.prank(alice);
     vault.burnAndWithdrawCollateral(5000e18, 1 ether);
-
+    (uint256 collateral2, uint256 debt2) = vault.getPosition(alice);
+    assertEq(collateral2, 0);
+    assertEq(debt2, 0);
   }
 
   function test_WithdrawAndBurn_Partial() public {
