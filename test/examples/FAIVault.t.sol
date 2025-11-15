@@ -4,6 +4,7 @@ pragma solidity 0.8.20;
 import "../../examples/FAIVault.sol";
 import  {Test} from "forge-std/Test.sol";
 import "../../examples/FAI.sol";
+import {MockPriceFeed} from "../examples/FAIVault.t.sol";
 
 contract FAIVaultTest is Test {
   FAI public fai;
@@ -12,6 +13,7 @@ contract FAIVaultTest is Test {
   address public alice;
   address public bob;
   address public charlie;
+  MockPriceFeed public mockOracle;
 
   /*///////////////////////
           SETUP
@@ -24,7 +26,7 @@ contract FAIVaultTest is Test {
 
     fai = new FAI();
     vault = new FAIVault(address(fai));
-
+    mockOracle = new MockPriceFeed();
     fai.setMinter(address(vault));
 
     vm.deal(alice, 10 ether);
@@ -134,6 +136,65 @@ contract FAIVaultTest is Test {
     vault.burnAndWithdrawCollateral(4000e18, 1 ether);
   }
 
+  /*////////////////////////////////////////////////////
+                         LIQUIDATION
+  ///////////////////////////////////////////////////*/
+  function test_Liquidation() public {
+    vm.prank(alice);
+    vault.depositCollateralAndMint{value: 1 ether}(6666e18);
+    assertEq(fai.balanceOf(alice), 6666e18);
+    // @dev Original mock price for ETH was set to $10K
+    // At 150%, it allows users to mint ~$6666.66 fai per ether
+    // This reduces to ~ $6333.33, when ether price drops to $9500
+    // At max mint, this calls for liquidation to maintain peg.
+    mockOracle.setPrice(9500e18);
+
+
+    vm.deal(charlie, 5 ether);
+    vm.prank(charlie);
+    vault.depositCollateralAndMint{value: 2 ether}(10000e18);
+    vm.prank(charlie);
+    fai.approve(address(vault), type(uint256).max);
+
+    vm.prank(charlie);
+    vault.liquidate(alice);
+    assertGt(charlie.balance, 3, "Liquidator should get ETH");   
+    (uint256 collateral, uint256 debt) = vault.getPosition(alice);
+    assertLt(collateral, 1e18, "Alice's collateral should be reduced");
+    assertLt(debt, 6666e18, "Alice's debt should be reduced");
+  }
+
+  function test_Liquidation_EmitsEvent() public {
+    vm.prank(alice);
+    vault.depositCollateralAndMint{value: 1 ether}(6666e18);
+    assertEq(fai.balanceOf(alice), 6666e18);
+    // @dev Original mock price for ETH was set to $10K
+    // At 150%, it allows users to mint ~$6666.66 fai per ether
+    // This reduces to ~ $6333.33, when ether price drops to $9500
+    // At max mint, this calls for liquidation to maintain peg.
+    mockOracle.setPrice(9500e18);
+
+
+    vm.deal(charlie, 5 ether);
+    vm.prank(charlie);
+    vault.depositCollateralAndMint{value: 2 ether}(10000e18);
+    vm.prank(charlie);
+    fai.approve(address(vault), type(uint256).max);
+
+    vm.prank(charlie);
+    vm.expectEmit(); 
+    // @dev Math for liquidation numbers //
+    // expected faiAmount = 6666e8 / 2  = 3333e18;
+    // for expected ethAmount ,
+    // normal eth = 3333 (FAI) / 9500 (new ETH price in USD) = ~0.35 ether
+    // with 1% penalty, discounted eth = 0.35 x 0.99 = ~0.347 ether
+    emit FAIPositionLiquidated(alice, 347333684210526315, 3333e18);
+    vault.liquidate(alice);
+  
+  }
+  function test_Liquidation_UpdatesGlobalState() public {}
+  function test_Liquidation_Self() public {}
+  function test_Liquidation_RewardsLiquidator() public {}
   /*////////////////////////////////////////////////////
                         Incident Management
   ////////////////////////////////////////////////////*/
